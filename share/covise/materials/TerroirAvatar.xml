@@ -64,30 +64,35 @@ gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
    
     void main( void )
     {
-    int gridSize = 3; // divide into 3x3 grid
-    float t = mod(float(Time), float(gridSize*gridSize+1)*1000.0); // 10 seconds
-    int splotchToShow = int(t/1000.0); 
+         int gridSize = 3;
+         int totalSplotches = gridSize * gridSize;
+         float t = mod(float(Time), float(totalSplotches)*1000.0); // loop over all splotches
+         int splotchToShow = int(t/1000.0);
 
-    // assign splotch index according to Texcoord
-    int splotchX = int(floor(Texcoord.x * float(gridSize)));
-    int splotchY = int(floor(Texcoord.y * float(gridSize)));
-    int splotchIdx = splotchY * gridSize + splotchX;
+         // Sample the reflection image/cube map for a seed
+        float imageSeed = textureCube(cubeMap, vec3(1.0, 0.0, 0.0)).r * 100.0;
 
-    // Calculate center of the current splotch
-    vec2 cellSize = vec2(1.0 / float(gridSize));
-    vec2 cellCenter = (vec2(splotchX, splotchY) + 0.5) * cellSize;
+        // For each splotch, compute its "random" order index
+        int splotchX = int(floor(Texcoord.x * float(gridSize)));
+        int splotchY = int(floor(Texcoord.y * float(gridSize)));
+        int splotchIdx = splotchY * gridSize + splotchX;
 
-    // Distance from fragment to center of its splotch
-    float dist = distance(Texcoord, cellCenter);
-    float angle = atan(Texcoord.y - cellCenter.y, Texcoord.x - cellCenter.x);
+        // Hash function for permutation (deterministic, based on imageSeed and splotchIdx)
+        int permutedOrder = int(mod(float(splotchIdx) * 13.37 + imageSeed * 7.91 +sin(float(splotchIdx) * 2.13 + imageSeed * 0.77) * 100.0, float(totalSplotches)));
 
-    // Wavy radius: base radius plus sine modulation
-    float baseRadius = SplotchCellSize * cellSize.x;
-    float wave = 0.05 * cellSize.x * sin(float(SplotchWaveNr) * angle + 0.005);
-    float splotchRadius = baseRadius + wave;
+        // Reveal splotches in permuted order
+        vec2 cellSize = vec2(1.0 / float(gridSize));
+        vec2 cellCenter = (vec2(splotchX, splotchY) + 0.5) * cellSize;
 
-    // Only show if splotchIdx &lt; splotchToShow and within wavy radius
-    float show = (splotchIdx &lt; splotchToShow &amp;&amp; dist &lt; splotchRadius) ? 1.0 : 0.0;
+        // Distance from fragment to center of its splotch
+        float dist = distance(Texcoord, cellCenter);
+
+        // Wavy radius: base radius plus sine modulation
+        float angle = atan(Texcoord.y - cellCenter.y, Texcoord.x - cellCenter.x);
+        float baseRadius = SplotchCellSize * cellSize.x;
+        float wave = 0.05 * cellSize.x * sin(float(SplotchWaveNr) * angle + 0.005);
+        float splotchRadius = baseRadius + wave;
+        float show = (permutedOrder &lt; splotchToShow &amp;&amp; dist &lt; splotchRadius) ? 1.0 : 0.0;
 
       vec4 final_color =
       	(gl_FrontLightModelProduct.sceneColor * gl_FrontMaterial.ambient) +
