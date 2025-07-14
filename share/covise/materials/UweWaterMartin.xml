@@ -63,7 +63,6 @@ gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
    
     void main( void )
     {
-    // color "splotch" effect
     int gridSize = 3; // divide into 3x3 grid
     float t = mod(float(Time), float(gridSize*gridSize+1)*1000.0); // 10 seconds
     int splotchToShow = int(t/1000.0); 
@@ -73,8 +72,21 @@ gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
     int splotchY = int(floor(Texcoord.y * float(gridSize)));
     int splotchIdx = splotchY * gridSize + splotchX;
 
-     // gradually make all splotches appear
-    float show = splotchIdx &lt; splotchToShow ? 1.0 : 0.0;
+    // Calculate center of the current splotch
+    vec2 cellSize = vec2(1.0 / float(gridSize));
+    vec2 cellCenter = (vec2(splotchX, splotchY) + 0.5) * cellSize;
+
+    // Distance from fragment to center of its splotch
+    float dist = distance(Texcoord, cellCenter);
+    float angle = atan(Texcoord.y - cellCenter.y, Texcoord.x - cellCenter.x);
+
+    // Wavy radius: base radius plus sine modulation
+    float baseRadius = 0.3 * cellSize.x;
+    float wave = 0.05 * cellSize.x * sin(8.0 * angle + 0.005); // 8 waves, animated
+    float splotchRadius = baseRadius + wave;
+
+    // Only show if splotchIdx &lt; splotchToShow and within wavy radius
+    float show = (splotchIdx &lt; splotchToShow &amp;&amp; dist &lt; splotchRadius) ? 1.0 : 0.0;
 
       vec4 final_color =
       	(gl_FrontLightModelProduct.sceneColor * gl_FrontMaterial.ambient) +
