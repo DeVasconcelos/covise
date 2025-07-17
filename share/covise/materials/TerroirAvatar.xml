@@ -1,4 +1,4 @@
-<_TerroirAvatar cullFace="off" transparent="true"><uniform name="SplotchCellSize" type="float" value="0.3"/><uniform name="SplotchWaveNr" type="int" value="8"/><uniform name="Time" type="int" value="0"/><uniform name="WaterScale" type="vec3" value="0.50 0.5 0.3"/><uniform name="WaterColor" type="vec4" value="1 1 1 1"/><uniform name="WaveSpeed" type="vec3" value="0.2 0.1 0.2"/><uniform name="WaveSpeed2" type="vec3" value="-0.1 0.2 -0.2"/><uniform name="WaveScale" type="vec3" value="2 1.5 0.2"/><uniform name="diffuseMap" type="sampler2D" value="0"/><uniform name="normalMap" type="sampler2D" value="1"/><uniform name="cubeMap" type="samplerCube" value="2"/><uniform name="FresExp" type="float" value="0.5"/><uniform name="fps" type="float" value="0.4"/><uniform name="Bumpiness" type="float" value="0.1"/><uniform name="Transparency" type="float" value="0.2"/><uniform name="KrMin" type="float" value="0.1"/><uniform name="Kr" type="float" value="1.0"/><attribute name="aBinormal" type="binormal" value="6"/><attribute name="aTangent" type="tangent" value="7"/><vertexProgram>varying vec3 normal, lightDir, eyeVec;
+<_TerroirAvatar cullFace="off" transparent="true"><uniform name="SplotchCellSize" type="float" value="0.3"/><uniform name="SplotchWaveNr" type="int" value="8"/><uniform name="Time" type="int" value="0"/><uniform name="WaterScale" type="vec3" value="0.50 0.5 0.3"/><uniform name="WaterColor" type="vec4" value="1 1 1 1"/><uniform name="WaveSpeed" type="vec3" value="0.2 0.1 0.2"/><uniform name="WaveSpeed2" type="vec3" value="-0.1 0.2 -0.2"/><uniform name="WaveScale" type="vec3" value="2 1.5 0.2"/><uniform name="diffuseMap" type="sampler2D" value="0"/><uniform name="normalMap" type="sampler2D" value="0"/><uniform name="waterCubeMap" type="samplerCube" value="2"/><uniform name="starryCubeMap" type="samplerCube" value="3"/><uniform name="forestCubeMap" type="samplerCube" value="4"/><uniform name="FresExp" type="float" value="0.5"/><uniform name="fps" type="float" value="0.4"/><uniform name="Bumpiness" type="float" value="0.1"/><uniform name="Transparency" type="float" value="0.2"/><uniform name="KrMin" type="float" value="0.1"/><uniform name="Kr" type="float" value="1.0"/><attribute name="aBinormal" type="binormal" value="6"/><attribute name="aTangent" type="tangent" value="7"/><vertexProgram>varying vec3 normal, lightDir, eyeVec;
     varying vec3 Binormal;
     varying vec3 Tangent;
     varying vec2 Texcoord;
@@ -48,7 +48,9 @@ gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
    
     uniform sampler2D diffuseMap;
     uniform sampler2D normalMap;
-    uniform samplerCube cubeMap;
+    uniform samplerCube waterCubeMap;
+    uniform samplerCube starryCubeMap;
+    uniform samplerCube forestCubeMap;
 
     uniform int Time;
     uniform vec4  WaterColor;
@@ -67,11 +69,11 @@ gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
          vec3 position = gl_FrontMaterial.diffuse.rgb;
          int gridSize = 3;
          int totalSplotches = gridSize * gridSize;
-         float t = mod(float(Time), float(totalSplotches)*1000.0); // loop over all splotches
-         int splotchToShow = int(t/1000.0);
+         float t = mod(float(Time), float(totalSplotches)*500.0); // loop over all splotches
+         int splotchToShow = int(t/500.0);
 
          // Sample the reflection image/cube map for a seed
-        float imageSeed = textureCube(cubeMap, vec3(1.0, 0.0, 0.0)).r * 100.0;
+        float imageSeed = textureCube(waterCubeMap, vec3(1.0, 0.0, 0.0)).r * 100.0;
 
         // For each splotch, compute its "random" order index
         int splotchX = int(floor(Texcoord.x * float(gridSize)));
@@ -113,7 +115,14 @@ gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
       vec3 L = normalize(lightDir);
 
       vec3 reflVec   = reflect(-eyeVecN, N);
-      vec4 reflColor = textureCube( cubeMap, reflVec );
+      vec4 reflColor;
+      if (position.z &lt; -9.0) {
+          reflColor = textureCube(starryCubeMap, reflVec);
+      } else if (position.z &gt; 10.0) {
+          reflColor = textureCube(forestCubeMap, reflVec);
+      } else {
+          reflColor = textureCube(waterCubeMap, reflVec);
+      }
       	
       float lambertTerm = abs(dot(N,L));
       if(lambertTerm &gt; 0.0)
