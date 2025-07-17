@@ -116,14 +116,19 @@ gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
 
       vec3 reflVec   = reflect(-eyeVecN, N);
       vec4 reflColor;
-      if (position.z &lt; -9.0) {
-          reflColor = textureCube(starryCubeMap, reflVec);
-      } else if (position.z &gt; 10.0) {
-          reflColor = textureCube(forestCubeMap, reflVec);
+      if (position.z &gt; -23.0  &amp;&amp; position.z &lt; -9.0 ) {
+          //reflColor = textureCube(starryCubeMap, reflVec);
+          gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+      } else if (position.z &gt; -7.0 &amp;&amp; position.z &lt; 6.5) {
+          //reflColor = textureCube(waterCubeMap, reflVec);
+         gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+      } else if (position.z &gt; 9.5 &amp;&amp; position.z &lt; 23.0) {
+          //reflColor = textureCube(forestCubeMap, reflVec);
+          gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
       } else {
-          reflColor = textureCube(waterCubeMap, reflVec);
+           gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       }
-      	
+      return;
       float lambertTerm = abs(dot(N,L));
       if(lambertTerm &gt; 0.0)
       {
