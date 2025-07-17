@@ -64,6 +64,7 @@ gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
    
     void main( void )
     {
+         vec3 position = gl_FrontMaterial.diffuse.rgb;
          int gridSize = 3;
          int totalSplotches = gridSize * gridSize;
          float t = mod(float(Time), float(totalSplotches)*1000.0); // loop over all splotches
