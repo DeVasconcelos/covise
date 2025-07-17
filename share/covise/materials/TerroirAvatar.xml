@@ -1,4 +1,4 @@
-<_TerroirAvatar cullFace="off" transparent="true"><uniform name="SplotchCellSize" type="float" value="0.3"/><uniform name="SplotchWaveNr" type="int" value="8"/><uniform name="Time" type="int" value="0"/><uniform name="waterMap" type="sampler2D" value="1"/><uniform name="starryMap" type="sampler2D" value="2"/><uniform name="forestMap" type="sampler2D" value="3"/><uniform name="fps" type="float" value="0.4"/><vertexProgram>    varying vec2 Texcoord;
+<_TerroirAvatar cullFace="off" transparent="true"><uniform name="SplotchCellSize" type="float" value="1"/><uniform name="SplotchWaveNr" type="int" value="8"/><uniform name="Time" type="int" value="0"/><uniform name="waterMap" type="sampler2D" value="1"/><uniform name="starryMap" type="sampler2D" value="2"/><uniform name="forestMap" type="sampler2D" value="3"/><uniform name="fps" type="float" value="0.4"/><vertexProgram>varying vec2 Texcoord;
     
     uniform int Time;
     uniform float fps;
@@ -12,7 +12,7 @@
         gl_Position = ftransform();	
         gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
     }
-  </vertexProgram><fragmentProgram>    varying vec2 Texcoord;
+  </vertexProgram><fragmentProgram>varying vec2 Texcoord;
    
     uniform sampler2D waterMap;
     uniform sampler2D starryMap;
@@ -22,50 +22,47 @@
    
     uniform float SplotchCellSize;
     uniform int SplotchWaveNr;
+
+    uniform vec3 splotchPositions[9]; // adjust size as needed
+    uniform int splotchType[9];       // adjust size as needed
+    uniform int numSplotches;           // actual number of splotches
    
     void main( void )
     {
-         vec3 position = gl_FrontMaterial.diffuse.rgb;
-         int gridSize = 3;
-         int totalSplotches = gridSize * gridSize;
-         float t = mod(float(Time), float(totalSplotches)*500.0); // loop over all splotches
-         int splotchToShow = int(t/500.0);
+    vec4 splotchColor = vec4(0.0, 0.0, 0.0, 1.0);
+    float show = 0.0;
 
-         // Sample the reflection image/cube map for a seed
-        float imageSeed = 0.5; //textureCube(waterMap, vec3(1.0, 0.0, 0.0)).r * 100.0;
+    // Get fragment position in world or plane coordinates
+    vec2 fragPos = Texcoord; // If Texcoord is mapped to world/plane coordinates
 
-        // For each splotch, compute its "random" order index
-        int splotchX = int(floor(Texcoord.x * float(gridSize)));
-        int splotchY = int(floor(Texcoord.y * float(gridSize)));
-        int splotchIdx = splotchY * gridSize + splotchX;
+    for (int i = 0; i &lt; numSplotches; ++i)
+    {
+        // Use only x/y for distance check
+        float dist = distance(fragPos, splotchPositions[i].xy);
 
-        // Hash function for permutation (deterministic, based on imageSeed and splotchIdx)
-        int permutedOrder = int(mod(float(splotchIdx) * 13.37 + imageSeed * 7.91 +sin(float(splotchIdx) * 2.13 + imageSeed * 0.77) * 100.0, float(totalSplotches)));
-
-        // Reveal splotches in permuted order
-        vec2 cellSize = vec2(1.0 / float(gridSize));
-        vec2 cellCenter = (vec2(splotchX, splotchY) + 0.5) * cellSize;
-
-        // Distance from fragment to center of its splotch
-        float dist = distance(Texcoord, cellCenter);
-
-        // Wavy radius: base radius plus sine modulation
-        float angle = atan(Texcoord.y - cellCenter.y, Texcoord.x - cellCenter.x);
-        float baseRadius = SplotchCellSize * cellSize.x;
-        float wave = 0.05 * cellSize.x * sin(float(SplotchWaveNr) * angle + 0.005);
+        // Wavy radius for splotch edge
+        float angle = atan(fragPos.y - splotchPositions[i].y, fragPos.x - splotchPositions[i].x);
+        float baseRadius = SplotchCellSize;
+        float wave = 0.05 * sin(float(SplotchWaveNr) * angle + 0.005);
         float splotchRadius = baseRadius + wave;
-        float show = (permutedOrder &lt; splotchToShow &amp;&amp; dist &lt; splotchRadius) ? 1.0 : 0.0;   
-      
-      vec4 splotchColor;
-      if (position.z &gt; -23.0  &amp;&amp; position.z &lt; -9.0 ) {
-          splotchColor = texture2D(starryMap, Texcoord); 
-      } else if (position.z &gt; -7.0 &amp;&amp; position.z &lt; 6.5) {
-         splotchColor = texture2D(waterMap, Texcoord);
-      } else if (position.z &gt; 9.5 &amp;&amp; position.z &lt; 23.0) {
-          splotchColor = texture2D(forestMap, Texcoord); 
-      } else {
-           splotchColor = vec4(0.0, 0.0, 0.0, 1.0);
-      }
-      gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 1.0), splotchColor, show);          
+
+        if (dist &lt; splotchRadius)
+        {
+            int sType = splotchType[i];
+            if (sType == 0)
+                splotchColor = texture2D(starryMap, Texcoord);
+            else if (sType == 1)
+                splotchColor = texture2D(waterMap, Texcoord);
+            else if (sType == 2)
+                splotchColor = texture2D(forestMap, Texcoord);
+            else
+                splotchColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+            show = 1.0;
+            break; // Only one splotch per fragment
+        }
+    }
+
+    gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 1.0), splotchColor, show);      
     }
   </fragmentProgram></_TerroirAvatar>
