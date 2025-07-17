@@ -115,44 +115,19 @@ gl_ClipVertex = gl_ModelViewMatrix*gl_Vertex;
       vec3 L = normalize(lightDir);
 
       vec3 reflVec   = reflect(-eyeVecN, N);
-      vec4 reflColor;
+      vec4 splotchColor;
       if (position.z &gt; -23.0  &amp;&amp; position.z &lt; -9.0 ) {
           //reflColor = textureCube(starryMap, reflVec);
-          gl_FragColor = texture2D(starryMap, Texcoord); //vec4(1.0, 0.0, 0.0, 1.0);
-          gl_FragColor.a = 1.0;
+          splotchColor = texture2D(starryMap, Texcoord); //vec4(1.0, 0.0, 0.0, 1.0);
       } else if (position.z &gt; -7.0 &amp;&amp; position.z &lt; 6.5) {
           //reflColor = textureCube(waterMap, reflVec);
-         gl_FragColor = texture2D(waterMap, Texcoord); //vec4(0.0, 0.0, 1.0, 1.0);
+         splotchColor = texture2D(waterMap, Texcoord); //vec4(0.0, 0.0, 1.0, 1.0);
       } else if (position.z &gt; 9.5 &amp;&amp; position.z &lt; 23.0) {
           //reflColor = textureCube(forestMap, reflVec);
-          gl_FragColor = texture2D(forestMap, Texcoord); // vec4(0.0, 1.0, 0.0, 1.0);
+          splotchColor = texture2D(forestMap, Texcoord); // vec4(0.0, 1.0, 0.0, 1.0);
       } else {
-           gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+           splotchColor = vec4(0.0, 0.0, 0.0, 1.0);
       }
-      return;
-      float lambertTerm = abs(dot(N,L));
-      if(lambertTerm &gt; 0.0)
-      {
-      
-      	final_color += gl_LightSource[0].diffuse *
-      	               WaterColor * lambertTerm*texture2D( diffuseMap, Texcoord);
-        float vdn = dot(eyeVecN,N);
-	float fres = KrMin + (Kr-KrMin) * pow(1.0-abs(vdn),FresExp);
-	final_color = mix(final_color  ,reflColor,fres);
-      //	final_color =	             reflColor;
-      	vec3 E = normalize(eyeVecN);
-      	vec3 R = reflect(-L, N);
-      	float specular = pow( max(dot(R, E), 0.0), 
-      		                 gl_FrontMaterial.shininess );
-      	final_color += gl_LightSource[0].specular *
-      	               gl_FrontMaterial.specular * 
-      				   specular;	
-        final_color.a = max(WaterColor.a,fres)- Transparency;
-        final_color.rgb+=texture2D( diffuseMap, Texcoord).rgb;
-        final_color.rgb = mix(vec3(0.0), final_color.rgb, show);
-        final_color.a *= show;
-      	}
-	gl_FragColor = final_color;	
-          
+      gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 1.0), splotchColor, show);          
     }
   </fragmentProgram></_TerroirAvatar>
