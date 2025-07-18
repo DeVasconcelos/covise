@@ -13,7 +13,6 @@ using namespace ui;
 
 SplotchAvatar::SplotchAvatar() : coVRPlugin(COVER_PLUGIN_NAME), Owner(COVER_PLUGIN_NAME, cover->ui)
 {
-    // Nothing to initialize for dynamic splotches
 }
 
 // Add member variable for timing
@@ -62,15 +61,20 @@ void SplotchAvatar::preFrame()
     osg::Vec3 avatarPos = getAvatarPosition();
     int planeType = getPlaneType(avatarPos);
 
+    // Reset colors if z changes sign from + to -
+    if (this->prevZ > 0.0f && avatarPos.z() < 0.0f)
+    {
+        for (int i = 0; i < 4; ++i)
+            areaActive[i] = false;
+        std::cout << "Reset areaActive to black (avatar restarted)" << std::endl;
+    }
+    this->prevZ = avatarPos.z();
+
     // Activate area if avatar is above a plane
-    /*std::cout << "Plane type: " << planeType << std::endl;
     if (planeType >= 0 && planeType < 3)
         areaActive[planeType] = true;
     else if (planeType == -1)
-        areaActive[3] = true; // "none" area*/
-
-    for (int i = 0; i < 4; ++i)
-        areaActive[i] = true;
+        areaActive[3] = true; // "none" area
 
     osg::Vec4 areaActiveVec(
         areaActive[0] ? 1.0f : 0.0f,
