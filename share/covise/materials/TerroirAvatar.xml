@@ -23,27 +23,22 @@
     uniform float SplotchCellSize;
     uniform int SplotchWaveNr;
 
-    uniform vec4 areaActive;
+    uniform vec3 areaActive;
    
     void main( void )
     {
         vec4 color = vec4(0.0, 0.0, 0.0, 1.0); // default: black
-        vec4 debugAreaActive = vec4(1, 1, 1, 1);
 
-        // Divide into 4 horizontal bands
-        if (Texcoord.y &lt; 0.25) {
+        if (Texcoord.y &lt; 0.5) {
             if (areaActive.x != 0.0)
                 color = vec4(1.0, 1.0, 0.0, 1.0); // yellow for plane 0
-        } else if (Texcoord.y &lt; 0.5) {
+        } else if (Texcoord.y &lt; 0.535) {
             if (areaActive.y != 0.0)
                 color = vec4(0.0, 0.5, 1.0, 1.0); // blue for plane 1
-        } else if (Texcoord.y &lt; 0.75) {
+        } else if (Texcoord.y &lt; 1.0) {
             if (areaActive.z != 0.0)
                 color = vec4(0.0, 1.0, 0.0, 1.0); // green for plane 2
-         } else {
-            if (areaActive.w != 0.0)
-                color = vec4(1.0, 0.0, 0.0, 1.0); // red for "none"
-        }
+         } 
 
         gl_FragColor = color;
 

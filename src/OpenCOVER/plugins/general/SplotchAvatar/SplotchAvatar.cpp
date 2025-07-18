@@ -54,7 +54,7 @@ osg::Vec3 SplotchAvatar::getAvatarPosition() const
     return worldMat.getTrans();
 }
 
-bool areaActive[4] = {false, false, false, false};
+bool areaActive[3] = {false, false, false};
 
 void SplotchAvatar::preFrame()
 {
@@ -64,7 +64,7 @@ void SplotchAvatar::preFrame()
     // Reset colors if z changes sign from + to -
     if (this->prevZ > 0.0f && avatarPos.z() < 0.0f)
     {
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 3; ++i)
             areaActive[i] = false;
         std::cout << "Reset areaActive to black (avatar restarted)" << std::endl;
     }
@@ -76,11 +76,10 @@ void SplotchAvatar::preFrame()
     else if (planeType == -1)
         areaActive[3] = true; // "none" area
 
-    osg::Vec4 areaActiveVec(
+    osg::Vec3 areaActiveVec(
         areaActive[0] ? 1.0f : 0.0f,
         areaActive[1] ? 1.0f : 0.0f,
-        areaActive[2] ? 1.0f : 0.0f,
-        areaActive[3] ? 1.0f : 0.0f);
+        areaActive[2] ? 1.0f : 0.0f);
 
     osg::Node *node = VRSceneGraph::instance()->findFirstNode<osg::Node>("WaterGhostMesh");
     osg::ref_ptr<osg::Uniform> areaActiveUniform = new osg::Uniform("areaActive", areaActiveVec);
