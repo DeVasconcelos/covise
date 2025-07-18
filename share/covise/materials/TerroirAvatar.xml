@@ -1,4 +1,4 @@
-<_TerroirAvatar cullFace="off" transparent="true"><uniform name="SplotchCellSize" type="float" value="1"/><uniform name="SplotchWaveNr" type="int" value="8"/><uniform name="Time" type="int" value="0"/><uniform name="waterMap" type="sampler2D" value="1"/><uniform name="starryMap" type="sampler2D" value="2"/><uniform name="forestMap" type="sampler2D" value="3"/><uniform name="fps" type="float" value="0.4"/><vertexProgram>varying vec2 Texcoord;
+<_TerroirAvatar cullFace="off" transparent="true"><uniform name="Time" type="int" value="0"/><uniform name="waterMap" type="sampler2D" value="1"/><uniform name="starryMap" type="sampler2D" value="2"/><uniform name="forestMap" type="sampler2D" value="3"/><uniform name="fps" type="float" value="0.4"/><vertexProgram>varying vec2 Texcoord;
     
     uniform int Time;
     uniform float fps;
@@ -19,12 +19,9 @@
     uniform sampler2D forestMap;
 
     uniform int Time;
-   
-    uniform float SplotchCellSize;
-    uniform int SplotchWaveNr;
 
     uniform int numSplotches;
-    uniform vec4 splotchPositions[32]; // x, y: Texcoord, z: type
+    uniform vec4 splotchPositions[32];
     uniform float splotchRadius;
    
     void main( void )
