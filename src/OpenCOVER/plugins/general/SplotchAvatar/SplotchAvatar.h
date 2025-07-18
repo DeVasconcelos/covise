@@ -17,10 +17,10 @@ public:
     osg::Vec3 getAvatarPosition() const;
 
 private:
-    static constexpr int maxSplotches = 9; // maximum number of splotches
-    std::vector<osg::Vec3> splotchPositions; // positions of collected splotches
-    std::vector<int> splotchType; // type of each splotch (0=starry, 1=water, 2=forest)
-    float splotchRadius = 2.0f; // increased for visibility
+    static constexpr int maxSplotches = 9;
+    std::vector<osg::Vec4> splotchPositions; 
+
+    float splotchRadius = 0.2f; 
     float prevZ = -23.0f; // previous z position of the avatar
     bool isNearExistingSplotch(const osg::Vec3 &pos) const;
     int getPlaneType(const osg::Vec3 &pos) const;

@@ -33,7 +33,9 @@ bool SplotchAvatar::isNearExistingSplotch(const osg::Vec3 &pos) const
 {
     for (const auto &splotchPos : splotchPositions)
     {
-        if ((pos - splotchPos).length() < splotchRadius)
+        float dx = pos.x() - splotchPos.x();
+        float dy = pos.y() - splotchPos.y();
+        if (dx * dx + dy * dy < splotchRadius * splotchRadius)
             return true;
     }
     return false;
@@ -54,8 +56,6 @@ osg::Vec3 SplotchAvatar::getAvatarPosition() const
     return worldMat.getTrans();
 }
 
-bool areaActive[3] = {false, false, false};
-
 void SplotchAvatar::preFrame()
 {
     osg::Vec3 avatarPos = getAvatarPosition();
@@ -64,26 +64,38 @@ void SplotchAvatar::preFrame()
     // Reset colors if z changes sign from + to -
     if (this->prevZ > 0.0f && avatarPos.z() < 0.0f)
     {
-        for (int i = 0; i < 3; ++i)
-            areaActive[i] = false;
-        std::cout << "Reset areaActive to black (avatar restarted)" << std::endl;
+        splotchPositions.clear();
     }
     this->prevZ = avatarPos.z();
 
-    // Activate area if avatar is above a plane
-    if (planeType >= 0 && planeType < 3)
-        areaActive[planeType] = true;
-    else if (planeType == -1)
-        areaActive[3] = true; // "none" area
+    // Example: map avatar z to Texcoord.y
+    float minZ = -23.0f, maxZ = 23.0f;
+    float v = (avatarPos.z() - minZ) / (maxZ - minZ); // Texcoord.y in [0,1]
+    float u = 0.5f;                                   // Center x
 
-    osg::Vec3 areaActiveVec(
-        areaActive[0] ? 1.0f : 0.0f,
-        areaActive[1] ? 1.0f : 0.0f,
-        areaActive[2] ? 1.0f : 0.0f);
+    if (planeType >= 0 && planeType < 3)
+    {
+        // Only add if not near an existing splotch
+        osg::Vec4 splotch(u, v, float(planeType), 0.0f);
+        bool alreadyThere = false;
+        for (const auto &sp : splotchPositions)
+            if ((sp.x() - u) * (sp.x() - u) + (sp.y() - v) * (sp.y() - v) < splotchRadius * splotchRadius)
+                alreadyThere = true;
+        if (!alreadyThere)
+            splotchPositions.push_back(splotch);
+    }
 
     osg::Node *node = VRSceneGraph::instance()->findFirstNode<osg::Node>("WaterGhostMesh");
-    osg::ref_ptr<osg::Uniform> areaActiveUniform = new osg::Uniform("areaActive", areaActiveVec);
-    node->getOrCreateStateSet()->addUniform(areaActiveUniform.get(), osg::StateAttribute::ON);
+    
+    osg::ref_ptr<osg::Uniform> splotchPositionsUniform = new osg::Uniform(osg::Uniform::FLOAT_VEC4, "splotchPositions", splotchPositions.size());
+    for (size_t i = 0; i < splotchPositions.size(); ++i)
+        splotchPositionsUniform->setElement(i, splotchPositions[i]);
+    osg::ref_ptr<osg::Uniform> numSplotchesUniform = new osg::Uniform("numSplotches", int(splotchPositions.size()));
+    osg::ref_ptr<osg::Uniform> splotchRadiusUniform = new osg::Uniform("splotchRadius", splotchRadius);
+
+    node->getOrCreateStateSet()->addUniform(splotchPositionsUniform.get(), osg::StateAttribute::ON);
+    node->getOrCreateStateSet()->addUniform(numSplotchesUniform.get(), osg::StateAttribute::ON);
+    node->getOrCreateStateSet()->addUniform(splotchRadiusUniform.get(), osg::StateAttribute::ON);
 }
 
 COVERPLUGIN(SplotchAvatar);
