@@ -30,8 +30,18 @@
 
     for (int i = 0; i &lt; numSplotches; ++i)
     {
-        float dist = distance(Texcoord, splotchPositions[i].xy);
-        if (dist &lt; splotchRadius)
+        // circle shape
+        float dx = Texcoord.x - splotchPositions[i].x;
+        float dy = Texcoord.y - splotchPositions[i].y;
+        float angle = atan(dy, dx); // Angle around the splotch center
+        float dist = sqrt(dx*dx + dy*dy);
+
+        // add sine wave border to create splotches
+        float amplitude = 0.2 * splotchRadius; 
+        float frequency = 8.0;  
+        float splotchEdge = splotchRadius + amplitude * sin(frequency * angle);
+
+        if (dist &lt; splotchEdge)
         {
             int type = int(splotchPositions[i].z);
             if (type == 0)
