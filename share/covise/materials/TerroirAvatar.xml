@@ -23,46 +23,29 @@
     uniform float SplotchCellSize;
     uniform int SplotchWaveNr;
 
-    uniform vec3 splotchPositions[9]; // adjust size as needed
-    uniform int splotchType[9];       // adjust size as needed
-    uniform int numSplotches;           // actual number of splotches
+    uniform vec4 areaActive;
    
     void main( void )
     {
-    vec4 splotchColor = vec4(0.0, 0.0, 0.0, 1.0);
-    float show = 0.0;
+        vec4 color = vec4(0.0, 0.0, 0.0, 1.0); // default: black
+        vec4 debugAreaActive = vec4(1, 1, 1, 1);
 
-    // Get fragment position in world or plane coordinates
-    vec2 fragPos = Texcoord; // If Texcoord is mapped to world/plane coordinates
-
-    for (int i = 0; i &lt; numSplotches; ++i)
-    {
-        // Use only x/y for distance check
-        float dist = distance(fragPos, splotchPositions[i].xy);
-
-        // Wavy radius for splotch edge
-        float angle = atan(fragPos.y - splotchPositions[i].y, fragPos.x - splotchPositions[i].x);
-        float baseRadius = SplotchCellSize;
-        float wave = 0.05 * sin(float(SplotchWaveNr) * angle + 0.005);
-        float splotchRadius = baseRadius + wave;
-
-        if (dist &lt; splotchRadius)
-        {
-            int sType = splotchType[i];
-            if (sType == 0)
-                splotchColor = texture2D(starryMap, Texcoord);
-            else if (sType == 1)
-                splotchColor = texture2D(waterMap, Texcoord);
-            else if (sType == 2)
-                splotchColor = texture2D(forestMap, Texcoord);
-            else
-                splotchColor = vec4(0.0, 0.0, 0.0, 1.0);
-
-            show = 1.0;
-            break; // Only one splotch per fragment
+        // Divide into 4 horizontal bands
+        if (Texcoord.y &lt; 0.25) {
+            if (areaActive.x != 0.0)
+                color = vec4(1.0, 1.0, 0.0, 1.0); // yellow for plane 0
+        } else if (Texcoord.y &lt; 0.5) {
+            if (areaActive.y != 0.0)
+                color = vec4(0.0, 0.5, 1.0, 1.0); // blue for plane 1
+        } else if (Texcoord.y &lt; 0.75) {
+            if (areaActive.z != 0.0)
+                color = vec4(0.0, 1.0, 0.0, 1.0); // green for plane 2
+         } else {
+            if (areaActive.w != 0.0)
+                color = vec4(1.0, 0.0, 0.0, 1.0); // red for "none"
         }
-    }
 
-    gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 1.0), splotchColor, show);      
+        gl_FragColor = color;
+
     }
   </fragmentProgram></_TerroirAvatar>

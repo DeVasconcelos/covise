@@ -55,46 +55,32 @@ osg::Vec3 SplotchAvatar::getAvatarPosition() const
     return worldMat.getTrans();
 }
 
+bool areaActive[4] = {false, false, false, false};
+
 void SplotchAvatar::preFrame()
 {
     osg::Vec3 avatarPos = getAvatarPosition();
     int planeType = getPlaneType(avatarPos);
-    double currentTime = osg::Timer::instance()->time_s();
-    if (planeType != -1 && !isNearExistingSplotch(avatarPos) &&
-        (currentTime - lastSplotchTime > 1.0) &&
-        splotchPositions.size() < maxSplotches)
-    {
-        // Only z changes, x and y are fixed
-        float v = (avatarPos.z() + 23) / (46); // v in [0,1]
-        splotchPositions.push_back(osg::Vec3(0.99, v, 0));
-        std::cout <<  "v"  << v << std::endl;
 
-        splotchType.push_back(planeType);
-        lastSplotchTime = currentTime;
-    }
+    // Activate area if avatar is above a plane
+    /*std::cout << "Plane type: " << planeType << std::endl;
+    if (planeType >= 0 && planeType < 3)
+        areaActive[planeType] = true;
+    else if (planeType == -1)
+        areaActive[3] = true; // "none" area*/
 
-    // Pass splotchPositions and splotchType arrays to shader
-    osg::ref_ptr<osg::Uniform> splotchPosUniform = new osg::Uniform(osg::Uniform::FLOAT_VEC3, "splotchPositions", splotchPositions.size());
-    for (size_t i = 0; i < splotchPositions.size(); ++i)
-        splotchPosUniform->setElement(static_cast<unsigned int>(i), splotchPositions[i]);
-    coVRShaderList::instance()->addGlobalUniform("splotchPositions", splotchPosUniform.get());
+    for (int i = 0; i < 4; ++i)
+        areaActive[i] = true;
 
-    osg::ref_ptr<osg::Uniform> splotchTypeUniform = new osg::Uniform(osg::Uniform::INT, "splotchType", splotchType.size());
-    for (size_t i = 0; i < splotchType.size(); ++i)
-        splotchTypeUniform->setElement(static_cast<unsigned int>(i), splotchType[i]);
-    coVRShaderList::instance()->addGlobalUniform("splotchType", splotchTypeUniform.get());
+    osg::Vec4 areaActiveVec(
+        areaActive[0] ? 1.0f : 0.0f,
+        areaActive[1] ? 1.0f : 0.0f,
+        areaActive[2] ? 1.0f : 0.0f,
+        areaActive[3] ? 1.0f : 0.0f);
 
-    osg::ref_ptr<osg::Uniform> numSplotchesUniform = new osg::Uniform("numSplotches", static_cast<int>(splotchPositions.size()));
-    coVRShaderList::instance()->addGlobalUniform("numSplotches", numSplotchesUniform.get());
-
-/*     std::cout << "numSplotches: " << splotchPositions.size() << std::endl;
-    for (size_t i = 0; i < splotchPositions.size(); ++i)
-    {
-        std::cout << "Splotch " << i << ": pos=("
-                  << splotchPositions[i].x() << ", "
-                  << splotchPositions[i].y() << ", "
-                  << splotchPositions[i].z() << "), type=" << splotchType[i] << std::endl;
-    } */
+    osg::Node *node = VRSceneGraph::instance()->findFirstNode<osg::Node>("WaterGhostMesh");
+    osg::ref_ptr<osg::Uniform> areaActiveUniform = new osg::Uniform("areaActive", areaActiveVec);
+    node->getOrCreateStateSet()->addUniform(areaActiveUniform.get(), osg::StateAttribute::ON);
 }
 
 COVERPLUGIN(SplotchAvatar);
