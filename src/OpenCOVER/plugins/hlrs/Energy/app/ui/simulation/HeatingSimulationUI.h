@@ -3,7 +3,6 @@
 #include <lib/core/simulation/heating.h>
 #include <lib/core/utils/color.h>
 
-#include <iostream>
 #include <memory>
 #include <osg/Vec4>
 
@@ -12,15 +11,25 @@
 
 using namespace core::simulation::heating;
 
+/**
+ * @brief UI class for managing and visualizing a HeatingSimulation.
+ *
+ * This template class extends BaseSimulationUI and provides specialized
+ * functionality for updating the UI based on the state of a HeatingSimulation.
+ * It handles updating energy grid colors for consumers and producers,
+ * retrieving minimum and maximum values for species, and updating timestep colors.
+ *
+ * @tparam T The parent UI type.
+ */
 template <typename T>
 class HeatingSimulationUI : public BaseSimulationUI<T> {
  public:
   HeatingSimulationUI(std::shared_ptr<HeatingSimulation> sim,
-                      std::shared_ptr<T> parent, std::shared_ptr<ColorMap> colorMap)
-      : BaseSimulationUI<T>(sim, parent, colorMap) {}
+                      std::shared_ptr<T> parent)
+      : BaseSimulationUI<T>(sim, parent) {}
   ~HeatingSimulationUI() = default;
-  HeatingSimulationUI(const HeatingSimulationUI &) = delete;
-  HeatingSimulationUI &operator=(const HeatingSimulationUI &) = delete;
+  HeatingSimulationUI(const HeatingSimulationUI&) = delete;
+  HeatingSimulationUI& operator=(const HeatingSimulationUI&) = delete;
 
   void updateTime(int timestep) override {
     auto parent = this->m_parent.lock();
@@ -31,41 +40,28 @@ class HeatingSimulationUI : public BaseSimulationUI<T> {
     if (energyGrid) {
       auto heatingSim = this->heatingSimulationPtr();
       if (!heatingSim) return;
-      auto updateEnergyGridColorsForContainer = [&](auto entities) {
-        this->updateEnergyGridColors(timestep, energyGrid, entities);
-      };
-      updateEnergyGridColorsForContainer(heatingSim->Consumers());
-      updateEnergyGridColorsForContainer(heatingSim->Producers());
+      this->updateEnergyGridColors(
+          timestep, energyGrid,
+          {std::ref(heatingSim->Consumers()), std::ref(heatingSim->Producers())});
+    } else {
+      std::cerr << "Parent is not an EnergyGrid." << std::endl;
     }
   }
 
-  void updateTimestepColors(const std::string &key, float min = 0.0f,
-                            float max = 1.0f, bool resetMinMax = false) override {
-    auto color_map = this->m_colorMapRef.lock();
-    if (!color_map) {
-      std::cerr << "ColorMap is not available for update of colors." << std::endl;
-      return;
-    }
+  float min(const std::string& species) override {
+    return this->heatingSimulationPtr()->getMin(species);
+  }
 
-    if (min > max) min = max;
-    color_map->max = max;
-    color_map->min = min;
+  float max(const std::string& species) override {
+    return this->heatingSimulationPtr()->getMax(species);
+  }
 
-    if (resetMinMax) {
-      auto &[res_min, res_max] = heatingSimulationPtr()->getMinMax(key);
-      color_map->max = res_max;
-      color_map->min = res_min;
-    }
-
+  void updateTimestepColors(const opencover::ColorMap& colorMap) override {
     // compute colors
     auto heatingSim = this->heatingSimulationPtr();
     if (!heatingSim) return;
-    auto computeColorsForContainer = [&](auto entities) {
-      this->computeColors(color_map, key, min, max, entities);
-    };
-
-    computeColorsForContainer(heatingSim->Consumers().get());
-    computeColorsForContainer(heatingSim->Producers().get());
+    this->computeColors(colorMap, {std::ref(heatingSim->Consumers()),
+                                   std::ref(heatingSim->Producers())});
   }
 
  private:

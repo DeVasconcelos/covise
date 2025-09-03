@@ -84,6 +84,7 @@ INCLUDE_DIRECTORIES(
   ${EXTRA_INCS}
   "${CMAKE_CURRENT_BINARY_DIR}/../js"
 )
+set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
 SET(VRML_SOURCES
   Audio.cpp
@@ -384,7 +385,7 @@ if (NOT MSVC)
     set_source_files_properties(${BISON_VrmlParser_OUTPUTS} PROPERTIES COMPILE_FLAGS -Wno-error)
 endif()
 
-COVISE_WNOERROR(coVRML BASEARCH chuckwalla stromboli waran gecko skink zebu dornteufel lurchi basilisk neuffen leopard)
+COVISE_WNOERROR(coVRML BASEARCH zebu)
 
 TARGET_LINK_LIBRARIES(coVRML
   coJS ${COVISE_UTIL_LIBRARY}

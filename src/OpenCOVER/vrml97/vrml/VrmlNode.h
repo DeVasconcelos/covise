@@ -51,8 +51,11 @@ namespace vrml{
 
 class VrmlScene;
 class Viewer;
-
+class VrmlNode;
 class VrmlNodeUpdateRegistry;
+
+VRMLEXPORT std::ostream &operator<<(std::ostream &os, const VrmlNode &f);
+
 class VRMLEXPORT VrmlNode
 {
     friend class VrmlNodeUpdateRegistry;

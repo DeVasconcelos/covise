@@ -84,9 +84,9 @@
 #include "QuitDialog.h"
 #include "Deletable.h"
 
-#include <input/input.h>
-#include <input/coMousePointer.h>
-#include <input/deviceDiscovery.h>
+#include "input/input.h"
+#include "input/coMousePointer.h"
+#include "input/deviceDiscovery.h"
 #include "ui/VruiView.h"
 #include "ui/TabletView.h"
 #include "ui/Action.h"
@@ -1217,7 +1217,12 @@ bool OpenCOVER::frame()
             if (cover->debugLevel(4))
                 std::cerr << "OpenCOVER::frame: rendering because of head tracking" << std::endl;
             render = true;
-            VRViewer::instance()->updateViewerMat(Input::instance()->getHeadMat());
+            VRViewer::instance()->updateViewerMat(Input::instance()->getHeadMat()); // view 0 is the active person, all the others are always the same
+            for (int i = 1; i < coVRConfig::instance()->numViews; i++)
+            {
+                VRViewer::instance()->updateViewerMat(Input::instance()->getPerson(i)->getHeadMat(), i);
+            }
+
         }
     }
     if (VRViewer::instance()->update())
